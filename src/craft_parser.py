@@ -9,6 +9,10 @@ information for simulation.
 from collections import OrderedDict
 import copy
 
+#TODO:
+# FIX SRFN PARSING AND USE IT TO DETERMINE RADIAL STAGING
+# USE SYM FIELD TO DETERMINE SYMMETRY AND EVEN BETTER STAGING
+
 #: These define which delimeters become model objects
 object_keys = [
     "PART",
@@ -46,41 +50,29 @@ class Model:
 
     def buildPartTree(self):
         stage = 0
-        for pos,part in self.properties["attN"].iteritems():
-            if part != self.parent:
-                self.addChild(part)
-                stage = max(stage,part.buildPartTree())
+        keys = ["link"]
+        for key in keys:
+            if key in self.properties:
+                for part in self.properties[key]:
+                    if part != self.parent:
+                        self.addChild(part)
+                        stage = max(stage,part.buildPartTree())
         self.stage = stage
         if "decoupler" in self.properties["part"][0]:
             stage += 1
         return stage
     
-    def resolve_attN(self, parts):
-        key = "attN"
-        if key not in self.properties:
-            return
-        vals = self.properties[key]
-        refVals = {}
-        for val in vals:
-            pos = val.split(',')[0]
-            name = val.split(',')[1]
-            for part in parts:
-                if name in part["part"]:
-                    refVals[pos] = part
-                    break
-        self.properties[key] = refVals
-
-    def resolve_link(self, parts):
-        key = "link"
+    def resolve_refs(self, key, parts):
         if key not in self.properties:
             return
         vals = self.properties[key]
         refVals = []
         for val in vals:
+            if len(val.split(',')) > 1:
+                val = val.split(',')[1]
             for part in parts:
                 if val in part["part"]:
                     refVals.append(part)
-                    break
         self.properties[key] = refVals
 
     def parse_model(self, model_str, chr_to_strip = ''):
@@ -125,20 +117,26 @@ class Model:
                 retStr += "{}\t{}:{}\n".format(prefix,k,v)
         if printChildren:
             for c in [x for x in self.children if x.kind == "PART"]:
-                retStr += "{}\n".format(c.toStr(prefix+'\t', printProps, printChildren))
+                retStr += "{}\n".format(c.toStr(prefix+' ', printProps, printChildren))
         return retStr
 
-fname = "./kerbalX.craft"
+def main():
 
-with open(fname) as f:
-    craft = Model('craft')
-    f_str = f.read()
-    craft.parse_model(f_str, chr_to_strip = '\t ')
-    #print root
-    parts = craft.getChildrenByKind("PART")
-    for p in parts:
-        p.resolve_attN(parts)
-        p.resolve_link(parts)
-    rootPart = parts[0]
-    rootPart.buildPartTree()
-    print rootPart.toStr('',True,True)
+    fname = "./kerbalX.craft"
+
+    with open(fname) as f:
+        craft = Model('craft')
+        f_str = f.read()
+        craft.parse_model(f_str, chr_to_strip = '\t ')
+        parts = craft.getChildrenByKind("PART")
+        for p in parts:
+            p.resolve_refs("srfN",parts)
+            p.resolve_refs("attN",parts)
+            p.resolve_refs("link",parts)
+        rootPart = parts[0]
+        rootPart.buildPartTree()
+        print rootPart.toStr('',True,True)
+
+
+if __name__ == "__main__":
+    main()    
