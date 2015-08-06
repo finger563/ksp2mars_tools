@@ -22,10 +22,12 @@ object_keys = [
 class Model:
     def __init__(self, kind = "none"):
         self.kind = kind
+        self.parent = None
         self.children = []
         self.properties = OrderedDict()
 
     def addChild(self, child):
+        child.parent = self
         self.children.append(child)
 
     def addProperty(self, key, value):
@@ -39,6 +41,20 @@ class Model:
         for c in self.children:
             kids.extend(c.getChildrenByKind(kind))
         return kids
+
+    def resolve_attN(self, parts):
+        if "attN" not in self.properties:
+            return
+        attN = self.properties["attN"]
+        partAtt = {}
+        for att in attN:
+            pos = att.split(',')[0]
+            name = att.split(',')[1]
+            for part in parts:
+                if name in part["part"]:
+                    partAtt[pos] = part
+                    break
+        self.properties["attN"] = partAtt
 
     def parse_model(self, model_str, chr_to_strip = ''):
         submodel_str = ""
@@ -74,7 +90,23 @@ class Model:
     def __getitem__(self, index):
         return self.properties[index]
 
+    def toStr(self, prefix='', printProps = True, printChildren = False):
+        retStr = "{}{}::\n".format(prefix, self.kind)
+        if printProps:
+            for k,v in self.properties.iteritems():
+                retStr += "{}\t{}:{}\n".format(prefix,k,v)
+        if printChildren:
+            for c in self.children:
+                retStr += "{}\n".format(c.toStr(prefix+'\t'))
+        return retStr
+
     def __repr__(self):
+        retStr = "{}::\n".format(self.kind)
+        for k,v in self.properties.iteritems():
+            retStr += "{}:{}\n".format(k,v)
+        return retStr
+
+    def __str__(self):
         retStr = "{}::\n".format(self.kind)
         for k,v in self.properties.iteritems():
             retStr += "{}:{}\n".format(k,v)
@@ -85,11 +117,14 @@ class Model:
 fname = "./kerbalX.craft"
 
 with open(fname) as f:
-    root = Model('craft')
+    craft = Model('craft')
     f_str = f.read()
-    root.parse_model(f_str, chr_to_strip = '\t ')
+    craft.parse_model(f_str, chr_to_strip = '\t ')
     #print root
-    parts = root.getChildrenByKind("PART")
-    partTree = copy.copy(parts[0])
-    print partTree
+    parts = craft.getChildrenByKind("PART")
+    for p in parts:
+        p.resolve_attN(parts)
+    rootPart = copy.copy(parts[0])
+    print rootPart.toStr('',True,True)
+    
     
