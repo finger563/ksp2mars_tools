@@ -43,18 +43,32 @@ class Model:
         return kids
 
     def resolve_attN(self, parts):
-        if "attN" not in self.properties:
+        key = "attN"
+        if key not in self.properties:
             return
-        attN = self.properties["attN"]
-        partAtt = {}
-        for att in attN:
-            pos = att.split(',')[0]
-            name = att.split(',')[1]
+        vals = self.properties[key]
+        refVals = {}
+        for val in vals:
+            pos = val.split(',')[0]
+            name = val.split(',')[1]
             for part in parts:
                 if name in part["part"]:
-                    partAtt[pos] = part
+                    refVals[pos] = part
                     break
-        self.properties["attN"] = partAtt
+        self.properties[key] = refVals
+
+    def resolve_link(self, parts):
+        key = "link"
+        if key not in self.properties:
+            return
+        vals = self.properties[key]
+        refVals = []
+        for val in vals:
+            for part in parts:
+                if val in part["part"]:
+                    refVals.append(part)
+                    break
+        self.properties[key] = refVals
 
     def parse_model(self, model_str, chr_to_strip = ''):
         submodel_str = ""
@@ -97,21 +111,7 @@ class Model:
                 retStr += "{}\t{}:{}\n".format(prefix,k,v)
         if printChildren:
             for c in self.children:
-                retStr += "{}\n".format(c.toStr(prefix+'\t'))
-        return retStr
-
-    def __repr__(self):
-        retStr = "{}::\n".format(self.kind)
-        for k,v in self.properties.iteritems():
-            retStr += "{}:{}\n".format(k,v)
-        return retStr
-
-    def __str__(self):
-        retStr = "{}::\n".format(self.kind)
-        for k,v in self.properties.iteritems():
-            retStr += "{}:{}\n".format(k,v)
-        for c in self.children:
-            retStr += "\t{}\n".format(c)
+                retStr += "{}\n".format(c.toStr(prefix+'\t', printProps, printChildren))
         return retStr
 
 fname = "./kerbalX.craft"
@@ -124,7 +124,6 @@ with open(fname) as f:
     parts = craft.getChildrenByKind("PART")
     for p in parts:
         p.resolve_attN(parts)
-    rootPart = copy.copy(parts[0])
+        p.resolve_link(parts)
+    rootPart = parts[0]
     print rootPart.toStr('',True,True)
-    
-    
