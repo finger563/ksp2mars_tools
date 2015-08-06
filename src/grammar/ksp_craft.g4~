@@ -1,0 +1,96 @@
+/*
+ * KSP Craft file grammar
+ * Author: William Emfinger
+ * Date: 2015.08.05
+ */
+
+grammar ksp_craft;
+
+/*
+ * This is the start of our craft file
+ */
+start
+    :   ('ship' '=' name)
+        ('version' '=' version)
+        ('description' '=' description)
+        ('type' '=' type)
+        ('size' '=' size)
+        (part)*
+        EOF
+    ;
+
+name
+    :   ID
+    ;
+
+version
+    :   ID
+    ;
+
+description
+    :   ID
+    ;
+
+type
+    :   ID
+    ;
+
+size
+    :   ID
+    ;
+
+
+/*
+ * Define a part Type
+ */
+part
+    :   'PART'
+        '{'
+        ( 'part' '=' uuid )
+        ( 'partName' '=' name )
+        ( 'link' '=' uuid )*
+        ( 'attN' '=' uuid )*
+        ( events )
+        ( actions )
+        ( partdata )
+        ( module )*
+        '}'
+    ;
+
+events
+    :   'EVENTS'
+        '{'
+        '}'
+actions
+    :   'ACTIONS'
+        '{'
+        '}'
+partdata
+    :   'PARTDATA'
+        '{'
+        '}'
+module
+    :   'MODULE'
+        '{'
+        '}'
+
+uuid
+    :
+        ID
+    ;
+
+// An ID - one or more alphanumeric characters that must start with either an alphabet/underscore
+ID
+    :   ( 'a'..'z' | 'A'..'Z' | '_' | '0'..'9' | '/' | '~' | '.' | '-')
+        ( 'a'..'z' | 'A'..'Z' | '0'..'9' | ',' | ' ' | '_' | '-' | ':' | '.' | '/' )*
+    ;
+
+
+// White spaces and escape codes are ignored
+WS
+    :   ( (' ')*
+        | '\t'
+        | '\r'
+        | '\n'
+        ) -> channel(HIDDEN)
+    ;
