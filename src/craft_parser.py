@@ -23,10 +23,12 @@ class Model:
     def __init__(self, kind = "none"):
         self.kind = kind
         self.parent = None
+        self.stage = 0
         self.children = []
         self.properties = OrderedDict()
 
     def addChild(self, child):
+        child.stage = self.stage
         child.parent = self
         self.children.append(child)
 
@@ -42,6 +44,17 @@ class Model:
             kids.extend(c.getChildrenByKind(kind))
         return kids
 
+    def buildPartTree(self):
+        stage = 0
+        for pos,part in self.properties["attN"].iteritems():
+            if part != self.parent:
+                self.addChild(part)
+                stage = max(stage,part.buildPartTree())
+        self.stage = stage
+        if "decoupler" in self.properties["part"][0]:
+            stage += 1
+        return stage
+    
     def resolve_attN(self, parts):
         key = "attN"
         if key not in self.properties:
@@ -106,11 +119,12 @@ class Model:
 
     def toStr(self, prefix='', printProps = True, printChildren = False):
         retStr = "{}{}::\n".format(prefix, self.kind)
+        retStr += "{}stage : {}\n".format(prefix, self.stage)
         if printProps:
             for k,v in self.properties.iteritems():
                 retStr += "{}\t{}:{}\n".format(prefix,k,v)
         if printChildren:
-            for c in self.children:
+            for c in [x for x in self.children if x.kind == "PART"]:
                 retStr += "{}\n".format(c.toStr(prefix+'\t', printProps, printChildren))
         return retStr
 
@@ -126,4 +140,5 @@ with open(fname) as f:
         p.resolve_attN(parts)
         p.resolve_link(parts)
     rootPart = parts[0]
+    rootPart.buildPartTree()
     print rootPart.toStr('',True,True)
