@@ -153,9 +153,12 @@ class Model:
                 retStr += "{}\n".format(c.toStr(prefix+' ', printProps, printChildren))
         return retStr
 
-def main():
-
+def main(argv):
+    
     fname = "./kerbalX.craft"
+    if len(argv) > 1:
+        fname = argv[1]
+    print "Analyzing craft {}".format(fname)
 
     with open(fname) as f:
         craft = Model('craft')
@@ -188,4 +191,5 @@ def main():
                 print "\t{}: {}".format(rType, stage[rType])
 
 if __name__ == "__main__":
-    main()    
+    import sys
+    main(sys.argv)
