@@ -169,11 +169,19 @@ def main():
         rootPart = parts[0]
         rootPart.buildPartTree()
         #print rootPart.toStr('',True,True)
+        
         stages = OrderedDict()
         rootPart.buildStageInfo(stages)
+
+        # CONVERT FROM INVERSE STAGE NUMBER TO STAGE NUMBER
+        newStages = OrderedDict()
         stages = sorted(stages.items(), key=operator.itemgetter(0))
-        print "NOTE: THESE ARE INVERSE STAGE NUMBERS; HIGHEST IS FIRST STAGE TO BE ACTIVATED"
+        highest = stages[-1][0]
         for num, stage in stages:
+            newStages[int(highest)-int(num)] = stage
+        stages = newStages
+
+        for num, stage in stages.iteritems():
             print "Stage {}:".format(num)
             for rType in resourceTypes:
                 stage.sumResources(rType)
