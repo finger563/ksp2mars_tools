@@ -8,6 +8,7 @@ information for simulation.
 
 from collections import OrderedDict
 import copy
+import operator
 
 #TODO:
 # FIX SRFN PARSING AND USE IT TO DETERMINE RADIAL STAGING
@@ -165,8 +166,9 @@ def main():
         #print rootPart.toStr('',True,True)
         stages = OrderedDict()
         rootPart.buildStageInfo(stages)
-        
-        for num, stage in stages.iteritems():
+        stages = sorted(stages.items(), key=operator.itemgetter(0))
+        print "NOTE: THESE ARE INVERSE STAGE NUMBERS; HIGHEST IS FIRST STAGE TO BE ACTIVATED"
+        for num, stage in stages:
             print "Stage {}:".format(num)
             for rType in resourceTypes:
                 stage.sumResources(rType)
