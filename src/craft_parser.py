@@ -22,9 +22,14 @@ object_keys = [
     "PARTDATA",
     "MODULE",
     "RESOURCE"
-    ]
+]
 
-resourceTypes = ['MonoPropellant', 'ElectricCharge', 'LiquidFuel', 'Oxidizer']
+resourceTypes = [
+    'MonoPropellant',
+    'ElectricCharge',
+    'LiquidFuel',
+    'Oxidizer'
+]
 
 class Model:
     def __init__(self, kind = "none"):
