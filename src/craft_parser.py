@@ -23,16 +23,36 @@ object_keys = [
     "RESOURCE"
     ]
 
+resourceTypes = ['MonoPropellant', 'ElectricCharge', 'LiquidFuel', 'Oxidizer']
+
 class Model:
     def __init__(self, kind = "none"):
         self.kind = kind
         self.parent = None
-        self.stage = 0
         self.children = []
         self.properties = OrderedDict()
 
+    def stage(self):
+        if 'istg' in self.properties:
+            return self['istg'][0]
+        else:
+            return -1
+
+    def resources(self,key):
+        res = 0
+        for c in [x for x in self.children if x.kind == "RESOURCE"]:
+            if key in c["name"]:
+                res += int(c["amount"][0])
+        return res
+
+    def sumResources(self, key):
+        if key in self.properties:
+            sum = 0
+            for num in self[key]:
+                sum += num
+            self[key] = sum
+
     def addChild(self, child):
-        child.stage = self.stage
         child.parent = self
         self.children.append(child)
 
@@ -49,19 +69,23 @@ class Model:
         return kids
 
     def buildPartTree(self):
-        stage = 0
         keys = ["link"]
         for key in keys:
             if key in self.properties:
                 for part in self.properties[key]:
                     if part != self.parent:
                         self.addChild(part)
-                        stage = max(stage,part.buildPartTree())
-        self.stage = stage
-        if "decoupler" in self.properties["part"][0]:
-            stage += 1
-        return stage
-    
+                        part.buildPartTree()
+
+    def buildStageInfo(self, stages):
+        stg = self.stage()
+        if stg > 0:
+            stage = stages.setdefault(self.stage(),Model("stage"))
+            for resourceType in resourceTypes:
+                stage.addProperty(resourceType, self.resources(resourceType))
+        for c in self.children:
+            c.buildStageInfo(stages)
+
     def resolve_refs(self, key, parts):
         if key not in self.properties:
             return
@@ -109,9 +133,12 @@ class Model:
     def __getitem__(self, index):
         return self.properties[index]
 
+    def __setitem__(self, index, val):
+        self.properties[index] = val
+
     def toStr(self, prefix='', printProps = True, printChildren = False):
         retStr = "{}{}::\n".format(prefix, self.kind)
-        retStr += "{}stage : {}\n".format(prefix, self.stage)
+        retStr += "{}stage : {}\n".format(prefix, self["istg"][0])
         if printProps:
             for k,v in self.properties.iteritems():
                 retStr += "{}\t{}:{}\n".format(prefix,k,v)
@@ -135,8 +162,15 @@ def main():
             p.resolve_refs("link",parts)
         rootPart = parts[0]
         rootPart.buildPartTree()
-        print rootPart.toStr('',True,True)
-
+        #print rootPart.toStr('',True,True)
+        stages = OrderedDict()
+        rootPart.buildStageInfo(stages)
+        
+        for num, stage in stages.iteritems():
+            print "Stage {}:".format(num)
+            for rType in resourceTypes:
+                stage.sumResources(rType)
+                print "\t{}: {}".format(rType, stage[rType])
 
 if __name__ == "__main__":
     main()    
