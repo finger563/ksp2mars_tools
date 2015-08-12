@@ -13,7 +13,6 @@ import operator
 from part_parser import BuildPartDict
 
 #TODO:
-# USE PART PARSER TO GET ISP/THRUST/MASS PER STAGE
 # USE SYM FIELD TO DETERMINE SYMMETRY AND EVEN BETTER STAGING
 
 #: These define which delimeters become model objects
