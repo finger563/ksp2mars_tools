@@ -167,15 +167,38 @@ class Model:
                 retStr += "{}\n".format(c.toStr(prefix+' ', printProps, printChildren))
         return retStr
 
+def write_csv(fname, stages):
+    with open(fname, 'w') as f:
+        headerStr = "Stage"
+        for prop in partProperties:
+            headerStr += ",{}".format(prop)
+        for rType in resourceTypes:
+            headerStr += ",{}".format(rType)
+        headerStr += "\n"
+        f.write(headerStr)
+        for num,stage in stages.iteritems():
+            stgStr = "{}".format(num)
+            for prop in partProperties:
+                stgStr += ",{}".format(stage[prop])
+            for rType in resourceTypes:
+                stgStr += ",{}".format(stage[rType])
+            stgStr += "\n"
+            f.write(stgStr)
+    
 def main(argv):
     
     fname = "./kerbalX.craft"
     kspdir = "~/SteamLibrary/steamapps/common/Kerbal Space Program"
+    outputFileName = "./output.csv"
     if len(argv) == 2:
         fname = argv[1]
     if len(argv) == 3:
         kspdir = argv[1]
         fname = argv[2]
+    if len(argv) == 4:
+        kspdir = argv[1]
+        fname = argv[2]
+        outputFileName = argv[3]
     partDict = BuildPartDict(kspdir)
 
     print "Analyzing craft {}".format(fname)
@@ -212,6 +235,8 @@ def main(argv):
             for pProp in partProperties:
                 stage.sumResources(pProp)
                 print "\t{}: {}".format(pProp, stage[pProp])
+
+    write_csv(outputFileName, stages)
 
 if __name__ == "__main__":
     import sys
