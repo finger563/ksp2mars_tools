@@ -10,8 +10,10 @@ from collections import OrderedDict
 import copy
 import operator
 
+from part_parser import BuildPartDict
+
 #TODO:
-# FIX SRFN PARSING AND USE IT TO DETERMINE RADIAL STAGING
+# USE PART PARSER TO GET ISP/THRUST/MASS PER STAGE
 # USE SYM FIELD TO DETERMINE SYMMETRY AND EVEN BETTER STAGING
 
 #: These define which delimeters become model objects
@@ -28,7 +30,15 @@ resourceTypes = [
     'MonoPropellant',
     'ElectricCharge',
     'LiquidFuel',
-    'Oxidizer'
+    'Oxidizer',
+]
+partProperties = [
+    'isp_vac',
+    'isp_srf',
+    'drag',
+    'wetMass',
+    'dryMass',
+    'thrust',
 ]
 
 class Model:
@@ -55,7 +65,7 @@ class Model:
         if key in self.properties:
             sum = 0
             for num in self[key]:
-                sum += num
+                sum += float(num)
             self[key] = sum
 
     def addChild(self, child):
@@ -83,14 +93,19 @@ class Model:
                         self.addChild(part)
                         part.buildPartTree()
 
-    def buildStageInfo(self, stages):
+    def buildStageInfo(self, stages, partDict):
         stg = self.stage()
         if stg > 0:
-            stage = stages.setdefault(self.stage(),Model("stage"))
+            stage = stages.setdefault(stg,Model("stage"))
             for resourceType in resourceTypes:
                 stage.addProperty(resourceType, self.resources(resourceType))
+            for partProp in partProperties:
+                pname = self['part'][0].split('_')[0]
+                if pname in partDict:
+                    print partProp, partDict[pname][partProp]
+                    stage.addProperty(partProp, partDict[pname][partProp])
         for c in self.children:
-            c.buildStageInfo(stages)
+            c.buildStageInfo(stages, partDict)
 
     def resolve_refs(self, key, parts):
         if key not in self.properties:
@@ -156,8 +171,14 @@ class Model:
 def main(argv):
     
     fname = "./kerbalX.craft"
-    if len(argv) > 1:
+    kspdir = "~/SteamLibrary/steamapps/common/Kerbal Space Program"
+    if len(argv) == 2:
         fname = argv[1]
+    if len(argv) == 3:
+        kspdir = argv[1]
+        fname = argv[2]
+    partDict = BuildPartDict(kspdir)
+
     print "Analyzing craft {}".format(fname)
 
     with open(fname) as f:
@@ -174,7 +195,7 @@ def main(argv):
         #print rootPart.toStr('',True,True)
         
         stages = OrderedDict()
-        rootPart.buildStageInfo(stages)
+        rootPart.buildStageInfo(stages, partDict)
 
         # CONVERT FROM INVERSE STAGE NUMBER TO STAGE NUMBER
         newStages = OrderedDict()
@@ -189,6 +210,9 @@ def main(argv):
             for rType in resourceTypes:
                 stage.sumResources(rType)
                 print "\t{}: {}".format(rType, stage[rType])
+            for pProp in partProperties:
+                stage.sumResources(pProp)
+                print "\t{}: {}".format(pProp, stage[pProp])
 
 if __name__ == "__main__":
     import sys
