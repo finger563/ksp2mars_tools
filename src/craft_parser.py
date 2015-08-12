@@ -200,6 +200,9 @@ def main(argv):
         fname = argv[2]
         outputFileName = argv[3]
     partDict = BuildPartDict(kspdir)
+    if not partDict:
+        print 'WARNING: no parts found! Check to make sure\n\t{}\nexists!'.format(
+            kspdir)
 
     print "Analyzing craft {}".format(fname)
 
