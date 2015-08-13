@@ -31,16 +31,17 @@ class Model(object):
             kids.extend(c.getChildrenByKind(kind))
         return kids
 
-    def parse_model(self, model_str, newType, chr_to_strip = ''):
+    def parse_model(self, model_str, chr_to_strip = ''):
         submodel_str = ""
         submodel_type = None
-        num_braces = 0
         prevLine = None
+        num_braces = 0
         for line in model_str.split('\n'):
             sline = line.strip(chr_to_strip)
             if not submodel_type:
                 if '{' == sline and prevLine:
                     num_braces += 1
+                    submodel_str += line + "\n"
                     submodel_type = prevLine.strip(chr_to_strip)
                     submodel_str = ''
                 elif '=' in sline:
@@ -52,8 +53,8 @@ class Model(object):
                 elif '}' == sline:
                     num_braces = num_braces - 1
                 if num_braces == 0:
-                    m = newType(submodel_type)
-                    m.parse_model(submodel_str, newType, chr_to_strip)
+                    m = self.__class__(submodel_type)
+                    m.parse_model(submodel_str, chr_to_strip)
                     self.addChild(m)
                     submodel_type = None
             prevLine = line
@@ -77,6 +78,7 @@ class Model(object):
             for k,v in self.properties.iteritems():
                 retStr += "{}\t{}:{}\n".format(prefix,k,v)
         if printChildren:
+            retStr += "{}children:\n".format(prefix)
             for c in [x for x in self.children if x.kind == "PART"]:
                 retStr += "{}\n".format(c.toStr(prefix+' ', printProps, printChildren))
         return retStr

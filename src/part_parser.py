@@ -15,8 +15,6 @@ import fnmatch
 
 from model import Model
 
-# no longer need object delimeters
-
 fuelDensity = 0.005  # 5 kg / unit of fuel (both liquid fuel and oxidizer)
 
 class Part(Model):
@@ -112,9 +110,9 @@ def BuildPartDict(kspdir = "~/SteamLibrary/steamapps/common/Kerbal Space Program
 
     for partFileName in partFileNames:
         with open(partFileName) as f:
-            part = Part('part')
+            part = Part('base')
             f_str = f.read()
-            part.parse_model(f_str, Part, chr_to_strip = '\t ')
+            part.parse_model(f_str, chr_to_strip = '\t\r ')
             parts = part.getChildrenByKind("PART")
             realPart = None
             if 'name' in part.properties:

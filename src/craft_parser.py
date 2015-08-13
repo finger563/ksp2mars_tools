@@ -16,7 +16,6 @@ from part_parser import BuildPartDict
 # USE SYM FIELD TO DETERMINE SYMMETRY AND EVEN BETTER STAGING
 
 from model import Model
-#: No longer need the object delimeters
 
 resourceTypes = [
     'MonoPropellant',
@@ -134,7 +133,7 @@ def main(argv):
     with open(fname) as f:
         craft = Craft('craft')
         f_str = f.read()
-        craft.parse_model(f_str, Craft, chr_to_strip = '\t ')
+        craft.parse_model(f_str, chr_to_strip = '\t\r ')
         parts = craft.getChildrenByKind("PART")
         for p in parts:
             p.resolve_refs("srfN",parts)
