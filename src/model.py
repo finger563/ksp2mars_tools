@@ -62,8 +62,8 @@ class Model(object):
     def parse_property(self, property_str, splitter='='):
         splitted = property_str.split(splitter)
         if len(splitted) > 1:
-            key = splitted[0].strip(' \n\t')
-            value = splitted[1].strip(' \n\t')
+            key = splitted[0].strip(' \n\t\r')
+            value = splitted[1].strip(' \n\t\r')
             self.addProperty(key,value)
 
     def __getitem__(self, index):
