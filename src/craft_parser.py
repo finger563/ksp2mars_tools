@@ -15,15 +15,8 @@ from part_parser import BuildPartDict
 #TODO:
 # USE SYM FIELD TO DETERMINE SYMMETRY AND EVEN BETTER STAGING
 
-#: These define which delimeters become model objects
-object_keys = [
-    "PART",
-    "EVENTS",
-    "ACTIONS",
-    "PARTDATA",
-    "MODULE",
-    "RESOURCE"
-]
+from model import Model
+#: No longer need the object delimeters
 
 resourceTypes = [
     'MonoPropellant',
@@ -40,12 +33,9 @@ partProperties = [
     'thrust',
 ]
 
-class Model:
+class Craft(Model):
     def __init__(self, kind = "none"):
-        self.kind = kind
-        self.parent = None
-        self.children = []
-        self.properties = OrderedDict()
+        super(Craft, self).__init__(kind)
 
     def stage(self):
         if 'istg' in self.properties:
@@ -67,22 +57,6 @@ class Model:
                 sum += float(num)
             self[key] = sum
 
-    def addChild(self, child):
-        child.parent = self
-        self.children.append(child)
-
-    def addProperty(self, key, value):
-        if key:
-            self.properties.setdefault(key,[]).append(value)
-
-    def getChildrenByKind(self, kind):
-        kids = []
-        if kind == self.kind:
-            kids.append(self)
-        for c in self.children:
-            kids.extend(c.getChildrenByKind(kind))
-        return kids
-
     def buildPartTree(self):
         keys = ["link"]
         for key in keys:
@@ -95,13 +69,12 @@ class Model:
     def buildStageInfo(self, stages, partDict):
         stg = self.stage()
         if stg > 0:
-            stage = stages.setdefault(stg,Model("stage"))
+            stage = stages.setdefault(stg,Craft("stage"))
             for resourceType in resourceTypes:
                 stage.addProperty(resourceType, self.resources(resourceType))
             for partProp in partProperties:
                 pname = self['part'][0].split('_')[0]
                 if pname in partDict:
-                    print partProp, partDict[pname][partProp]
                     stage.addProperty(partProp, partDict[pname][partProp])
         for c in self.children:
             c.buildStageInfo(stages, partDict)
@@ -118,54 +91,6 @@ class Model:
                 if val in part["part"]:
                     refVals.append(part)
         self.properties[key] = refVals
-
-    def parse_model(self, model_str, chr_to_strip = ''):
-        submodel_str = ""
-        submodel_type = None
-        num_braces = 0
-        for line in model_str.split('\n'):
-            sline = line.strip(chr_to_strip)
-            if not submodel_type:
-                if sline in object_keys:
-                    submodel_type = sline
-                    submodel_str = ''
-                elif '=' in sline:
-                    self.parse_property(line)
-            elif submodel_type:
-                submodel_str += line + "\n"
-                if '{' == sline:
-                    num_braces += 1
-                elif '}' == sline:
-                    num_braces = num_braces - 1
-                if num_braces == 0:
-                    m = Model(submodel_type)
-                    m.parse_model(submodel_str, chr_to_strip)
-                    self.addChild(m)
-                    submodel_type = None
-
-    def parse_property(self, property_str, splitter='='):
-        splitted = property_str.split(splitter)
-        if len(splitted) > 1:
-            key = splitted[0].strip(' \n\t')
-            value = splitted[1].strip(' \n\t')
-            self.addProperty(key,value)
-
-    def __getitem__(self, index):
-        return self.properties[index]
-
-    def __setitem__(self, index, val):
-        self.properties[index] = val
-
-    def toStr(self, prefix='', printProps = True, printChildren = False):
-        retStr = "{}{}::\n".format(prefix, self.kind)
-        retStr += "{}stage : {}\n".format(prefix, self["istg"][0])
-        if printProps:
-            for k,v in self.properties.iteritems():
-                retStr += "{}\t{}:{}\n".format(prefix,k,v)
-        if printChildren:
-            for c in [x for x in self.children if x.kind == "PART"]:
-                retStr += "{}\n".format(c.toStr(prefix+' ', printProps, printChildren))
-        return retStr
 
 def write_csv(fname, stages):
     with open(fname, 'w') as f:
@@ -207,9 +132,9 @@ def main(argv):
     print "Analyzing craft {}".format(fname)
 
     with open(fname) as f:
-        craft = Model('craft')
+        craft = Craft('craft')
         f_str = f.read()
-        craft.parse_model(f_str, chr_to_strip = '\t ')
+        craft.parse_model(f_str, Craft, chr_to_strip = '\t ')
         parts = craft.getChildrenByKind("PART")
         for p in parts:
             p.resolve_refs("srfN",parts)
