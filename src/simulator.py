@@ -7,6 +7,7 @@ performance on both Earth and Mars.
 """
 
 from decimal import *
+import math
 
 def atmo_earth(h):
     p = -1
@@ -15,13 +16,13 @@ def atmo_earth(h):
 
     if h < 11000:
         T = 15.04 - 0.00649 * h + 273.1
-        P = 101.29 * exp((T/288.08),5.256)
+        P = 101.29 * ( (T/288.08) ** 5.256 )
     elif h < 25000:
         T = -56.46 + 273.1
-        P = 22.65 * exp(1.73 - 0.000157 * h)
+        P = 22.65 * math.exp(1.73 - 0.000157 * h)
     else:
         T = -131.21 + 0.00299 * h + 273.1
-        P = 2.488 * exp( T / 216.6, -11.388 )
+        P = 2.488 * ( T / 216.6 ** -11.388 )
     rho = P / (0.2869 * T)
 
     gamma = 1.4
@@ -34,10 +35,10 @@ def atmo_earth(h):
 def atmo_mars(h):
     if h < 7000:
         T = -31 - .000998*h + 273.1
-        P = .699*exp(-.00009*h)
+        P = .699*math.exp(-.00009*h)
     else:
         T = -23.4 - .00222*h + 273.1
-        P = .699*exp(-.00009*h)
+        P = .699*math.exp(-.00009*h)
 
     rho = (P)/(.1921*(T))
     gamma = 1.4
