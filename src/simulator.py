@@ -35,10 +35,10 @@ def atmo_earth(h):
 def atmo_mars(h):
     if h < 7000:
         T = -31 - .000998*h + 273.1
-        P = .699*math.exp(-.00009*h)
+        P = .699 * math.exp(-.00009*h)
     else:
         T = -23.4 - .00222*h + 273.1
-        P = .699*math.exp(-.00009*h)
+        P = .699 * math.exp(-.00009*h)
 
     rho = (P)/(.1921*(T))
     gamma = 1.4
