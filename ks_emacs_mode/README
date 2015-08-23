@@ -1,0 +1,5 @@
+Put the ks-mode directory into your ~/.emacs.d directory and then
+add the following to your .emacs file.
+
+(add-to-list 'load-path "~/.emacs.d/ks-mode")
+(require 'ks-mode)
