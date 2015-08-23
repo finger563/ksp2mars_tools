@@ -64,7 +64,7 @@ until haltflag {
             set state_change to false.
         }.
 
-        set newmode to ctlidl_exec(statevec).
+        set newmode to ctlidl_exec(ctlmode_ctx, statevec).
     }
     else if ctlmode = ctlmode_ascent {
         // Check if we just moved to this state
@@ -75,7 +75,7 @@ until haltflag {
             set state_change to false.
         }.
 
-        set newmode to ctlasc_exec(statevec).
+        set newmode to ctlasc_exec(ctlmode_ctx, statevec).
     }
     else if ctlmode = ctlmode_orbit {
         // Check if we just moved to this state
@@ -86,7 +86,7 @@ until haltflag {
             set state_change to false.
         }.
 
-        set newmode to ctlobt_exec(statevec).
+        set newmode to ctlobt_exec(ctlmode_ctx, statevec).
     }
     else if ctlmode = ctlmode_land {
         // Check if we just moved to this state
@@ -97,7 +97,7 @@ until haltflag {
             set state_change to false.
         }.
 
-        set newmode to ctllnd_exec(statevec).
+        set newmode to ctllnd_exec(ctlmode_ctx, statevec).
     }.
 
     // Check if we've moved to a new state.
